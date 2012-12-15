@@ -1,99 +1,130 @@
 #include "world.h"
 
-World::World(QObject *parent):
+TWorld::TWorld(QObject *parent):
     QObject(parent),
-    _world(new b2World(b2Vec2(0,0))),
-    _bgNumber(1),
-    _bgTimer(0),
-    _gm(false),
+    World(new b2World(b2Vec2(0,0))),
+    BackgroundImageNumber(1),
+    BackgroundTimer(0),
     _gmY(-480),
+    GameOvered(false),
     _gmImage(QImage(gameOver))
 {
-    _player=new Player(_world,&_surface);
-    _ball=new Ball(_world,&_surface);
+    World->SetContactListener(this);
+
+    Player=new TPlayer(World,&Surface);
+    Ball=new TBall(World,&Surface);
+    _currentFrame=QImage(QString("%1%2%3").arg(bgImagesPath).arg(BackgroundImageNumber).arg(bgImagesEnd));
+
+
+    // BodyDef for walls
     b2BodyDef bodyDef;
-    bodyDef.type=b2_staticBody;
+    bodyDef.type = b2_staticBody;
     bodyDef.position.Set(0,0);
-    bodyDef.angle=0;
-    b2Body *body=_world->CreateBody(&bodyDef);
+    bodyDef.angle = 0;
+    b2Body *body = World->CreateBody(&bodyDef);
+
     b2PolygonShape polygon;
-    polygon.SetAsBox(bgSizeX,1,b2Vec2(0,-20),0);
     b2FixtureDef fixture;
-    fixture.shape=&polygon;
-    fixture.restitution=1;
-    fixture.friction=0;
-    body->CreateFixture(&fixture);
-    polygon.SetAsBox(1,bgSizeY,b2Vec2(-20,0),0);
-    fixture.shape=&polygon;
-    body->CreateFixture(&fixture);
-    polygon.SetAsBox(1,bgSizeY,b2Vec2(bgSizeX,20),0);
-    fixture.shape=&polygon;
+    fixture.restitution = 1;
+    fixture.friction = 0;
+
+    // Border #1
+    polygon.SetAsBox(0.1 * bgSizeX, 0.1 * 1, b2Vec2(0, -20 * 0.1), 0);
+    fixture.shape = &polygon;
     body->CreateFixture(&fixture);
 
-    for (int q=0;q<20;q++)
-        for (int i=0;i<5;i++)
-            _blockList.append(new Block(_world,&_surface,QPointF(q*40,i*40)));
-    _music.setCurrentSource(bgSong);
-    _music.enqueue(bgSong1);
-    Phonon::createPath(&_music,&_output);
-    _music.play();
-    startTimer(5);
+    // Border #2
+    polygon.SetAsBox(0.1 * 1, 0.1 *bgSizeY, b2Vec2(-20 * 0.1, 0), 0);
+    fixture.shape = &polygon;
+    body->CreateFixture(&fixture);
+
+    // Border #3
+    polygon.SetAsBox(0.1 * 1, 0.1 * bgSizeY, b2Vec2(0.1 * bgSizeX, 20 * 0.1),0);
+    fixture.shape = &polygon;
+    body->CreateFixture(&fixture);
+
+    // Blocks
+    for (int q = 0; q < 20; q++) {
+        for (int i = 0; i < 5; i++) {
+            Blocks.append(new TBlock(World, &Surface, QPointF(q * 40, i * 40)));
+        }
+    }
+
+    Music.setCurrentSource(bgSong);
+    Music.enqueue(bgSong1);
+    Phonon::createPath(&Music,&AudoiOut);
+    Music.play();
+
+    startTimer(20);
 }
 
-void World::timerEvent(QTimerEvent *)
+void TWorld::timerEvent(QTimerEvent *)
 {
-    if (!_gm)
+    if (!GameOvered)
     {
-        _world->Step(1.0/20.0,5,2);
-       for (int q=0;q<_blockList.size();q++)
+        World->Step(1.0 / 50.0, 5, 2);
+       for (int q = 0; q < Blocks.size(); q++)
         {
-            _blockList[q]->update();
-            if (_blockList[q]->isDestroy())
+            if (Blocks[q]->IsDestroyed())
             {
-                delete _blockList[q];
-                _blockList.remove(q);
+                Blocks[q]->Delete();
+                Blocks.remove(q);
             }
         }
-        _ball->update();
-        _gm=_ball->gameOver();
+        GameOvered=Ball->GameOver();
     }
 }
 
-void World::paint()
+void TWorld::paint()
 {
-    _surface=QImage(QString("%1%2%3").arg(bgImagesPath).arg(_bgNumber).arg(bgImagesEnd));
-    if (!_gm)
-    {
-        _player->paint();
-        _ball->paint();
-        for (int q=0;q<_blockList.size();q++)
-            _blockList[q]->paint();
-        if (_bgTimer>=bgTime)
-        {
-            _bgTimer=0;
-            if (_bgNumber>=bgNumbers)
-                _bgNumber=1;
-            else
-                _bgNumber++;
+    Surface=_currentFrame;
+
+    if (!GameOvered) {
+        Player->paint();
+        Ball->Paint();
+
+        for (int q=0;q<Blocks.size();q++) {
+            Blocks[q]->Paint();
         }
-        else
-            _bgTimer++;
+
+        if (BackgroundTimer >= bgTime) {
+            BackgroundTimer = 0;
+            if (BackgroundImageNumber >= bgNumbers) {
+                BackgroundImageNumber = 1;
+            } else {
+                BackgroundImageNumber++;
+            }
+        }
+        else {
+            BackgroundTimer++;
+        }
     }
-    else
-    {
-        QPainter painter(&_surface);
-        painter.drawImage(0,_gmY,_gmImage);
-        if (_gmY!=0)
-            _gmY+=10;
+    else {
+        QPainter painter(&Surface);
+        painter.drawImage(0, _gmY, _gmImage);
+        if (_gmY != 0)
+            _gmY += 10;
     }
 }
 
-void World::move(qreal x)
-{
-    _player->move(x);
+void TWorld::move(qreal x) {
+    Player->move(x);
 }
 
-QImage World::surface()
-{
-    return _surface;
+QImage TWorld::surface() {
+    return Surface;
+}
+
+ // Collisions processing
+void TWorld::BeginContact(b2Contact* contact) {
+    TBlock* block = NULL;
+    if (contact->GetFixtureA()->GetBody()->GetUserData() != NULL) {
+        block = (TBlock*)contact->GetFixtureA()->GetBody()->GetUserData();
+    }
+    if (contact->GetFixtureB()->GetBody()->GetUserData() != NULL) {
+        block = (TBlock*)contact->GetFixtureB()->GetBody()->GetUserData();
+    }
+    if (block != NULL) {
+        block->Destroy();
+    }
 }

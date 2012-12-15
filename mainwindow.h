@@ -27,5 +27,5 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    World _world;
+    TWorld _world;
 };

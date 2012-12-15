@@ -1,43 +1,34 @@
 #include "ball.h"
 
-Ball::Ball(b2World *world, QImage *surface):
-    _surface(surface),
-    _image(QImage(ballImage))
+TBall::TBall(b2World *world, QImage *surface):
+    Surface(surface),
+    Image(QImage(ballImage))
 {
     b2BodyDef body;
     body.type=b2_dynamicBody;
-    body.position.Set(ballX,ballY);
+    body.position.Set(0.1*ballX, 0.1*ballY);
     body.angle=0;
-    _body=world->CreateBody(&body);
+    Body=world->CreateBody(&body);
     b2CircleShape circle;
-    circle.m_radius=ballSize;
+    circle.m_radius=0.1*ballSize;
     b2FixtureDef fixture;
     fixture.shape=&circle;
     fixture.restitution=1;
     fixture.friction=0;
-    _body->CreateFixture(&fixture);
-    _body->SetLinearVelocity(b2Vec2(0,50));
-    _body->SetAngularDamping(1);
+    Body->CreateFixture(&fixture);
+    Body->SetLinearVelocity(b2Vec2(6, -25));
+    Body->SetAngularDamping(1);
 }
 
-void Ball::paint()
+void TBall::Paint()
 {
-    QPainter painter(_surface);
-    painter.drawImage(_body->GetPosition().x,_body->GetPosition().y,_image);
-    //qDebug() << abs(_body->GetLinearVelocity().x)+abs(_body->GetLinearVelocity().y);
+    QPainter painter(Surface);
+    painter.drawImage(Body->GetPosition().x * 10, Body->GetPosition().y * 10, Image);
 }
 
-void Ball::update()
+bool TBall::GameOver()
 {
-    if (abs(_body->GetLinearVelocity().x)+abs(_body->GetLinearVelocity().y)-40<0)
-        _body->SetLinearVelocity(b2Vec2(-_speed.x,-_speed.y));
-    else
-        _speed=_body->GetLinearVelocity();
-}
-
-bool Ball::gameOver()
-{
-    if (_body->GetPosition().y>bgSizeY)
+    if (Body->GetPosition().y > 0.1 * bgSizeY)
         return true;
     else
         return false;

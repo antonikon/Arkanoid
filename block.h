@@ -2,18 +2,22 @@
 #include <Box2D/Box2D.h>
 #include <QImage>
 #include <QPainter>
-#include "values.h"
 #include <QPointF>
 
-class Block
+#include "values.h"
+
+
+class TBlock
 {
 public:
-    Block(b2World *world, QImage *surface, const QPointF &position);
-    void paint();
-    void update();
-    bool isDestroy();
+    TBlock(b2World *world, QImage *surface, const QPointF &position);
+    void Paint();
+    bool IsDestroyed();
+    void Destroy();
+    void Delete();
 private:
-    QImage *_surface, _image;
-    b2Body *_body;
-    bool _isDestroy;
+    QImage* Surface;
+    QImage Image;
+    b2Body* Body;
+    bool Destroyed;
 };

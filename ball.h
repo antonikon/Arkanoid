@@ -3,18 +3,18 @@
 #include <QtCore>
 #include <QImage>
 #include <QPainter>
+
 #include "values.h"
 
-class Ball
+class TBall
 {
 public:
-    Ball(b2World *world, QImage *surface);
-    void paint();
-    void update();
-    bool gameOver();
+    TBall(b2World *world, QImage *surface);
+    void Paint();
+    bool GameOver();
 private:
-    b2Body *_body;
-    QImage _image,*_surface;
-    b2Vec2 _speed;
+    b2Body* Body;
+    QImage* Surface;
+    QImage Image;
+    b2Vec2 Speed;
 };
-

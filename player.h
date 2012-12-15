@@ -6,13 +6,14 @@
 #include "values.h"
 #include "ball.h"
 
-class Player
+class TPlayer
 {
 public:
-    Player(b2World *world, QImage *surface);
+    TPlayer(b2World *world, QImage *surface);
     void paint();
     void move(qreal x);
 private:
-    b2Body *_body;
-    QImage _image, *_surface;
+    b2Body* Body;
+    QImage* Surface;
+    QImage Image;
 };

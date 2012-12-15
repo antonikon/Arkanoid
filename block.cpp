@@ -1,42 +1,43 @@
 #include "block.h"
 
-Block::Block(b2World *world, QImage *surface, const QPointF &position):
-    _surface(surface),
-    _image(QImage(blockImage)),
-    _isDestroy(false)
+TBlock::TBlock(b2World *world, QImage *surface, const QPointF &position)
+    : Surface(surface)
+    , Image(QImage(blockImage))
+    , Destroyed(false)
 {
     b2BodyDef body;
-    body.type=b2_dynamicBody;
-    body.position.Set(position.x(),position.y());
-    body.angle=0;
-    _body=world->CreateBody(&body);
+    body.type = b2_staticBody;
+    body.position.Set(0.1 * position.x(), 0.1 * position.y());
+    body.angle = 0;
+    Body=world->CreateBody(&body);
     b2CircleShape circle;
-    circle.m_radius=blockSize/2;
+    circle.m_radius = 0.1 * blockSize / 2;
     b2FixtureDef fixture;
-    fixture.shape=&circle;
-    fixture.restitution=1;
-    fixture.friction=0;
-    _body->CreateFixture(&fixture);
-    _body->SetAngularDamping(1);
-    _body->SetLinearDamping(1);
+    fixture.shape = &circle;
+    fixture.restitution = 1;
+    fixture.friction = 0;
+    Body->CreateFixture(&fixture);
+    Body->SetAngularDamping(1);
+    Body->SetLinearDamping(1);
+    Body->SetUserData(this);
 }
 
-void Block::paint()
-{
-    QPainter painter(_surface);
-    painter.drawImage(_body->GetPosition().x,_body->GetPosition().y,_image);
+void TBlock::Destroy() {
+    Destroyed = true;
 }
 
-void Block::update()
-{
-    if (abs(_body->GetLinearVelocity().x)+abs(_body->GetLinearVelocity().y)!=0)
-    {
-        _body->GetWorld()->DestroyBody(_body);
-        _isDestroy=true;
-    }
+void TBlock::Delete() {
+    Body->GetWorld()->DestroyBody(Body);
+    delete this;
 }
 
-bool Block::isDestroy()
+void TBlock::Paint()
 {
-    return _isDestroy;
+    QPainter painter(Surface);
+    painter.drawImage(Body->GetPosition().x * 10, Body->GetPosition().y * 10 ,Image);
+}
+
+bool TBlock::IsDestroyed()
+{
+    return Destroyed;
 }

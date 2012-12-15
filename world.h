@@ -14,24 +14,26 @@
 #include <QTimerEvent>
 #include <QPointF>
 
-class World: public QObject
+class TWorld: public QObject, public b2ContactListener
 {
     Q_OBJECT
 public:
-    World(QObject *parent=0);
+    TWorld(QObject *parent=0);
     void timerEvent(QTimerEvent *);
     void paint();
     void move(qreal x);
     QImage surface();
 private:
-    Player *_player;
-    Ball *_ball;
-    QVector <Block*> _blockList;
-    b2World *_world;
-    QImage _surface,_gmImage;
-    qint32 _bgNumber, _bgTimer, _gmY;
-    Phonon::MediaObject _music;
-    Phonon::AudioOutput _output;
-    bool _gm;
+    void BeginContact(b2Contact* contact);
+private:
+    TPlayer* Player;
+    TBall* Ball;
+    QVector <TBlock*> Blocks;
+    b2World* World;
+    qint32 BackgroundImageNumber, BackgroundTimer, _gmY;
+    bool GameOvered;
+    QImage Surface, _gmImage, _currentFrame;
+    Phonon::MediaObject Music;
+    Phonon::AudioOutput AudoiOut;
 };
 

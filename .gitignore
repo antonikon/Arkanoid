@@ -9,12 +9,13 @@
 *.so
 *.dll
 *.dylib
-
+*ui_*
 # Qt-es
 
 *.pro.user
 *.pro.user.*
 moc_*.cpp
 qrc_*.cpp
-Makefile
+Makefile*
 *-build-*
+debug/*
